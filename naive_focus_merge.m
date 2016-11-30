@@ -28,6 +28,9 @@ function [ result ] = naive_focus_merge(photos, sz)
     for ringno = 1:N_RINGS
         pixsperring(ringno) = size(find(RQ == ringno), 1)^2;
     end
+    
+    weightsperring = (pixsperring').^2;
+    weightsperring = weightsperring / sum(weightsperring(:));
 
     N_ROWFRAMES = ceil(ROWS/winrows);
     N_COLFRAMES = ceil(COLS/wincols);
@@ -39,7 +42,7 @@ function [ result ] = naive_focus_merge(photos, sz)
     
     for irow=1:N_ROWFRAMES
         for icol=1:N_COLFRAMES
-            disp(['Progress: ' num2str(100 * (icol + irow * N_COLFRAMES) / NNN) '%']);
+            disp(['Progress: ' num2str(100 * ((icol-1) + (irow-1) * N_COLFRAMES) / NNN) '%']);
             
             rows = (1+winrows*(irow-1)):min(ROWS, winrows*(irow));
             cols = (1+wincols*(icol-1)):min(COLS, wincols*(icol));
@@ -61,7 +64,7 @@ function [ result ] = naive_focus_merge(photos, sz)
                     tmp = subF(padded_rows, padded_cols);
                     
                     sharpness = sharpness + ...
-                        (sum(sum(abs(subF(padded_rows, padded_cols) .* double(ringmask))))) / pixsperring(ringno);
+                        weightsperring(ringno) * (sum(sum(abs(subF(padded_rows, padded_cols) .* double(ringmask(1:length(rows), 1:length(cols))))))) / pixsperring(ringno);
                     
                 end
                 
