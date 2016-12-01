@@ -40,6 +40,8 @@ if (isrgb)
     alignedrgb = align_images(filesrgb, transforms, [ifixed]);
 end
 
+save alignedgray;
+
 %% Show aligned images
 figure;
 for i=1:N
@@ -54,6 +56,6 @@ end
 
 %% Calculate depth-map from aligned focus stack
 
-depth = calc_depth_map(alignedrgb);
+depth = calc_depth_map(alignedgray);
 
 figure; imshow(depth);
