@@ -12,3 +12,6 @@ depth_from_defocus('photostacks/wall_panels', 'jpg', 'last');
 
 %% Weird face stack
 depth_from_defocus('photostacks/weird_face', 'png', 1);
+
+%% Keyboard
+depth_from_defocus('photostacks/keyboard', 'jpg', 1);

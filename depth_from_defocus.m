@@ -1,5 +1,7 @@
 function depth_from_defocus(directory, imagetype, ifixed)
 
+MAX_SIZE = 1000;
+
 % get all files in the directory of that type
 tmp = dir([directory '/*.' imagetype]);
 tmp = {tmp.name}
@@ -9,15 +11,49 @@ if (ischar(ifixed))
     ifixed = N;
 end
 
+% get image info
+info = imfinfo(tmp{1});
+isrgb = strcmp('truecolor', info.ColorType);
+
+%% Align all images to the desired fixed image
 for i=1:N
-    files(:,:,i) = rgb2gray(im2double(imread(tmp{i})));
+    image = im2double(imread(tmp{i}));
+    
+    if (info.Width > info.Height && info.Width > MAX_SIZE)
+        image = imresize(image, [MAX_SIZE NaN]);
+    elseif (info.Height > info.Width && info.Height > MAX_SIZE)
+        image = imresize(image, [NaN MAX_SIZE]);
+    end
+    
+    if (~isrgb) % Grayscale
+        filesgray(:,:,i) = image;
+    else
+        filesrgb(:,:,:,i) = image;
+        filesgray(:,:,i) = rgb2gray(image);
+    end
 end
 
-aligned = align_images(files, ifixed, 250);
+transforms = calc_align_transforms(filesgray, ifixed, 250);
 
+alignedgray = align_images(filesgray, transforms, [ifixed]);
+if (isrgb)
+    alignedrgb = align_images(filesrgb, transforms, [ifixed]);
+end
+
+%% Show aligned images
 figure;
-hold on;
 for i=1:N
-    imshowpair(files(:,:,i), aligned(:,:,i), 'montage');
+    if (isrgb)
+        imshow(alignedrgb(:,:,:,i));
+    else
+        imshow(alignedgray(:,:,i));
+    end
     waitforbuttonpress;
 end
+
+
+%% Calculate depth-map from aligned focus stack
+
+depth = calc_depth_map(alignedrgb);
+
+figure; imshow(depth);
