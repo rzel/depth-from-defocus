@@ -1,10 +1,10 @@
-function depth_from_defocus(directory, imagetype, ifixed)
+function Isharpgray = depth_from_defocus(directory, imagetype, ifixed)
 
 MAX_SIZE = 1000;
 
 % get all files in the directory of that type
 tmp = dir([directory '/*.' imagetype]);
-tmp = {tmp.name}
+tmp = {tmp.name};
 
 N = length(tmp);
 if (ischar(ifixed))
@@ -33,29 +33,55 @@ for i=1:N
     end
 end
 
+ROWS = size(image, 1);
+COLS = size(image, 2);
+
 transforms = calc_align_transforms(filesgray, ifixed, 250);
 
-alignedgray = align_images(filesgray, transforms, [ifixed]);
+alignedgray = align_images(filesgray, transforms, [ifixed], N);
 if (isrgb)
-    alignedrgb = align_images(filesrgb, transforms, [ifixed]);
+    alignedrgb = align_images(filesrgb, transforms, [ifixed], N);
 end
 
-save alignedgray;
+%save alignedgray;
 
 %% Show aligned images
-figure;
-for i=1:N
-    if (isrgb)
-        imshow(alignedrgb(:,:,:,i));
-    else
-        imshow(alignedgray(:,:,i));
-    end
-    waitforbuttonpress;
+% figure;
+% for i=1:N
+%     if (0)%isrgb)
+%         imshow(alignedrgb(:,:,:,i));
+%     else
+%         imshow(alignedgray(:,:,i));
+%     end
+%     waitforbuttonpress;
+% end
+
+
+%% Calculate sharpness map from aligned focus stack
+
+sharpnessmap = calc_sharpness_map(alignedgray, N);
+figure; imshow(sharpnessmap / max(sharpnessmap(:)));
+
+%% Create all-in-focus image from focus stack and sharpness map
+
+Isharpgray = zeros(ROWS, COLS);
+if (isrgb)
+    Isharprgb = zeros(ROWS, COLS, 3);
 end
 
+for row=1:ROWS
+    for col=1:COLS
+        isharpest = sharpnessmap(row, col);
+        
+        Isharpgray(row, col) = alignedgray(row, col, isharpest);
+        if (isrgb)
+            Isharprgb(row, col, :) = alignedrgb(row, col, :, isharpest);
+        end
+    end
+end
 
-%% Calculate depth-map from aligned focus stack
+figure; imshow(Isharpgray);
 
-depth = calc_depth_map(alignedgray);
+%% Calculate depth map from all-in-focus image and aligned stack
 
-figure; imshow(depth);
+calc_depth_map(Isharpgray, alignedgray, N);

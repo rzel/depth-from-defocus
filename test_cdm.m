@@ -2,7 +2,16 @@
 load alignedgray.mat;
 
 %%
-depth = calc_depth_map(alignedgray);
+N = size(alignedgray, 3);
+depth = calc_sharpness_map(alignedgray, N);
+
+depth = depth / max(depth(:));
+
+depth_ = imgaussfilt(1-depth, 100);
 
 figure;
-imshow(depth);
+imshow(depth_);
+
+
+figure;
+surf(depth_);

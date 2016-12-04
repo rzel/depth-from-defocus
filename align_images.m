@@ -1,6 +1,4 @@
-function [aligned] = align_images(images, transforms, except)
-
-N = length(transforms);
+function [aligned] = align_images(images, transforms, except, N)
 
 for i=1:N
     if (ndims(images) == 3) % Grayscale
