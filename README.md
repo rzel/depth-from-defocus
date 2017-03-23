@@ -1,1 +1,1 @@
-Depth From Defocus for 3D Portraits
+A Method for Refocusing Photos using Depth from Defocus
